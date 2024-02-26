@@ -69,11 +69,10 @@ const getCoordinates = (req: Request, res: Response, next: NextFunction) => {
     // coordinates below should be an array of GPS coordinates in decimal format: [longitude, latitude]
     new ExifImage({image: req.file?.path}, (error, exifData) => {
       if (error) {
-        console.log('eka', error);
+        console.log('Error extracting EXIF data:', error);
         res.locals.coords = defaultPoint;
         next();
       } else {
-        // console.log('exif data', exifData);
         try {
           const lon = gpsToDecimal(
             exifData.gps.GPSLongitude || [0, 0, 0],
@@ -83,21 +82,20 @@ const getCoordinates = (req: Request, res: Response, next: NextFunction) => {
             exifData.gps.GPSLatitude || [0, 0, 0],
             exifData.gps.GPSLatitudeRef || 'E',
           );
-          const coordinates: Point = {
+          res.locals.coords = {
             type: 'Point',
             coordinates: [lon, lat],
           };
-          res.locals.coords = coordinates;
           next();
         } catch (err) {
-          console.log('toka', err);
+          console.log('Error converting GPS coordinates:', err);
           res.locals.coords = defaultPoint;
           next();
         }
       }
     });
   } catch (error) {
-    console.log('kolmas', error);
+    console.log('Error:', error);
     res.locals.coords = defaultPoint;
     next();
   }
